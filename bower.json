@@ -1,5 +1,10 @@
 {
   "name": "purescript-halogen-leaflet",
+  "license": "MIT",
+  "repository": {
+    "type":"git",
+    "url":"git://github.com/tdammers/purescript-halogen-leaflet"
+  },
   "ignore": [
     "**/.*",
     "node_modules",

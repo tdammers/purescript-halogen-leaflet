@@ -17,6 +17,7 @@ import Util (formatGeo)
 
 data Query a
   = HandleLeaflet LC.Message a
+  | Initialize a
 
 type State =
   { view :: Maybe (Tuple LatLng Zoom)
@@ -34,11 +35,13 @@ ui :: forall eff
        Void
        (Aff (avar :: AVAR, leaflet :: LEAFLET, err :: EXCEPTION | eff))
 ui =
-  H.parentComponent
+  H.lifecycleParentComponent
     { initialState: const initialState
     , render
     , eval
     , receiver: const Nothing
+    , initializer: Just (H.action Initialize)
+    , finalizer: Nothing
     }
   where
 
@@ -82,6 +85,9 @@ ui =
             Void
             (Aff (avar :: AVAR, leaflet :: LEAFLET, err :: EXCEPTION | eff))
   eval = case _ of
+    Initialize next -> do
+      _ <- H.query LeafletSlot $ H.action (LC.AddTileLayer "//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png")
+      pure next
     HandleLeaflet msg next -> do
       v <- H.query LeafletSlot $ H.request LC.GetView
       H.modify _ { view = join v }

@@ -74,19 +74,13 @@ eval :: forall eff
      ~> H.ComponentDSL State Query Message
         (Aff (avar :: AVAR, leaflet :: LEAFLET, err :: EXCEPTION | eff))
 eval (Initialize next) = do
-  state <- H.get
-  Tuple m l <- H.liftEff do
-    m <- Leaflet.map
-      state.ref
-      (Leaflet.latlng 52.0 4.0)
-      7
-    l <- Leaflet.tileLayer("//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png")
-    Leaflet.addLayer l m
-    pure $ Tuple m l
+  ref <- H.gets _.ref
+  m <- H.liftEff do
+    Leaflet.map ref (Leaflet.latlng 52.0 4.0) 7
 
   H.modify $ \state ->
     state
-      { tileLayers = [l]
+      { tileLayers = []
       , leaflet = Just m
       }
 

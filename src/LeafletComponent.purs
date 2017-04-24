@@ -111,7 +111,7 @@ eval (AddTileLayer url next) = do
       Nothing -> pure unit
       Just m -> do
         l <- H.liftEff do
-          l <- Leaflet.tileLayer(url)
+          l <- Leaflet.tileLayer url []
           Leaflet.addLayer l m
           pure l
         H.modify (\state ->

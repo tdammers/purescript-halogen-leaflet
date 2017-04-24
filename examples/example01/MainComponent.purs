@@ -12,8 +12,9 @@ import Control.Monad.Aff
 import Control.Monad.Aff.AVar (AVAR)
 import Control.Monad.Eff.Exception (EXCEPTION)
 import Leaflet (LEAFLET, LatLng, Zoom)
-import Data.Tuple (Tuple (..))
+import Data.Tuple (Tuple (..), fst)
 import Util (formatGeo)
+import Data.Array (elem, catMaybes)
 
 data Query a
   = HandleLeaflet LC.Message a
@@ -21,6 +22,7 @@ data Query a
 
 type State =
   { view :: Maybe (Tuple LatLng Zoom)
+  , mousePos :: Maybe LatLng
   }
 
 data Slot = LeafletSlot
@@ -48,6 +50,7 @@ ui =
   initialState :: State
   initialState =
     { view: Nothing
+    , mousePos: Nothing
     }
 
   render :: State
@@ -63,17 +66,28 @@ ui =
       , HH.div
         [ HP.class_ $ H.ClassName "overlay"
         ]
-        case state.view of
-          Nothing -> []
-          Just (Tuple { lat: lat, lng: lng } zoom) ->
-            [ HH.div
-              [ HP.class_ $ H.ClassName "panel"
-              ]
-              [ HH.div_ [ HH.text $ "lat: " <> formatGeo "N" "S" lat ]
-              , HH.div_ [ HH.text $ "lng: " <> formatGeo "E" "W" lng ]
-              , HH.div_ [ HH.text $ "zoom: " <> show zoom ]
-              ]
-            ]
+        $ catMaybes
+        [ case state.view of
+            Nothing ->
+              Nothing
+            Just (Tuple { lat: lat, lng: lng } zoom) ->
+              Just $ HH.div
+                [ HP.class_ $ H.ClassName "panel"
+                ]
+                [ HH.div_ [ HH.text $ "lat: " <> formatGeo "N" "S" lat ]
+                , HH.div_ [ HH.text $ "lng: " <> formatGeo "E" "W" lng ]
+                , HH.div_ [ HH.text $ "zoom: " <> show zoom ]
+                ]
+        , case state.mousePos of
+            Nothing -> Nothing
+            Just { lat: lat, lng: lng } ->
+              Just $ HH.div
+                [ HP.class_ $ H.ClassName "panel"
+                ]
+                [ HH.div_ [ HH.text $ "lat: " <> formatGeo "N" "S" lat ]
+                , HH.div_ [ HH.text $ "lng: " <> formatGeo "E" "W" lng ]
+                ]
+        ]
       ]
 
   eval :: Query
@@ -89,7 +103,12 @@ ui =
       _ <- H.query LeafletSlot $ H.action (LC.AddTileLayer "//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png")
       pure next
     HandleLeaflet msg next -> do
-      v <- H.query LeafletSlot $ H.request LC.GetView
-      H.modify _ { view = join v }
-      pure next
+      when (msg `elem` [ LC.Moved, LC.Zoomed, LC.Initialized ]) $ do
+        v <- H.query LeafletSlot $ H.request LC.GetView
+        H.modify _ { view = join v }
+      case msg of
+        LC.MouseMoved e -> do
+          H.modify _ { mousePos = Just e.latlng }
+          pure next
+        _ -> pure next
 

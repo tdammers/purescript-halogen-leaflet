@@ -44,6 +44,8 @@ data Message
   | DblClicked MouseEvent
   | MouseMoved MouseEvent
 
+derive instance eqMessage :: Eq Message
+
 type LeafletRef = String
 
 ui ref =

@@ -2,8 +2,8 @@
   "name": "purescript-halogen-leaflet",
   "license": "MIT",
   "repository": {
-    "type":"git",
-    "url":"git://github.com/tdammers/purescript-halogen-leaflet"
+    "type": "git",
+    "url": "git://github.com/tdammers/purescript-halogen-leaflet"
   },
   "ignore": [
     "**/.*",
@@ -15,7 +15,8 @@
     "purescript-prelude": "^3.0.0",
     "purescript-console": "^3.0.0",
     "purescript-leaflet-tdammers": "^0.0.4",
-    "purescript-halogen": "^2.0.0"
+    "purescript-halogen": "^2.0.0",
+    "leaflet": "^1.0.3"
   },
   "devDependencies": {
     "purescript-psci-support": "^3.0.0"

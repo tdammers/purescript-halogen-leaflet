@@ -1,0 +1,30 @@
+{
+  "name": "purescript-halogen-leaflet",
+  "version": "1.0.0",
+  "description": "Leaflet bindings for Halogen",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "pulp build",
+    "example01": "pulp browserify --to dist/example01/index.js -I examples/example01"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tdammers/purescript-halogen-leaflet.git"
+  },
+  "keywords": [
+    "purescript",
+    "halogen",
+    "leaflet",
+    "map"
+  ],
+  "author": "Tobias Dammers <tdammers@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/tdammers/purescript-halogen-leaflet/issues"
+  },
+  "homepage": "https://github.com/tdammers/purescript-halogen-leaflet#readme"
+}

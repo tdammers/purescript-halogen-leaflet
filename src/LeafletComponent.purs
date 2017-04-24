@@ -61,7 +61,6 @@ render state =
   HH.div
     [ HP.ref (H.RefLabel "leaflet")
     , HP.prop (HC.PropName "id") "leaflet"
-    , HP.prop (HC.PropName "style") "width: 600px; height: 400px;"
     ]
     [ ]
 

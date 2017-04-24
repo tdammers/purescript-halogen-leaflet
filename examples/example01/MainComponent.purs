@@ -74,9 +74,9 @@ ui =
               Just $ HH.div
                 [ HP.class_ $ H.ClassName "panel"
                 ]
-                [ HH.div_ [ HH.text $ "lat: " <> formatGeo "N" "S" lat ]
-                , HH.div_ [ HH.text $ "lng: " <> formatGeo "E" "W" lng ]
-                , HH.div_ [ HH.text $ "zoom: " <> show zoom ]
+                [ HH.div [ HP.class_ $ H.ClassName "geo" ] [ HH.text $ formatGeo "N" "S" lat ]
+                , HH.div [ HP.class_ $ H.ClassName "geo" ] [ HH.text $ formatGeo "E" "W" lng ]
+                , HH.div [ HP.class_ $ H.ClassName "zoom" ] [ HH.text $ "zoom: " <> show zoom ]
                 ]
         , case state.mousePos of
             Nothing -> Nothing
@@ -84,8 +84,8 @@ ui =
               Just $ HH.div
                 [ HP.class_ $ H.ClassName "panel"
                 ]
-                [ HH.div_ [ HH.text $ "lat: " <> formatGeo "N" "S" lat ]
-                , HH.div_ [ HH.text $ "lng: " <> formatGeo "E" "W" lng ]
+                [ HH.div [ HP.class_ $ H.ClassName "geo" ] [ HH.text $ formatGeo "N" "S" lat ]
+                , HH.div [ HP.class_ $ H.ClassName "geo" ] [ HH.text $ formatGeo "E" "W" lng ]
                 ]
         ]
       ]

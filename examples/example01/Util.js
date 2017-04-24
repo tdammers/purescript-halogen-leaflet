@@ -1,3 +1,11 @@
+var padTo = function (str, l, s) {
+    var n = l - str.length
+    for (var i = 0; i < n; ++i) {
+        str = s + str
+    }
+    return str
+}
+
 exports.formatGeo = function (posIndicator) {
     return function (negIndicator) {
         return function(gc) {
@@ -9,9 +17,11 @@ exports.formatGeo = function (posIndicator) {
             var degrees = Math.floor(gc)
             var minutesRaw = (gc - degrees) * 60
             var minutes = Math.floor(minutesRaw)
-            var seconds = minutesRaw - minutes
+            var seconds = (minutesRaw - minutes) * 60
 
-            return degrees.toFixed(0) + "°" + minutes.toFixed(0) + "'" + seconds.toFixed(4) + '"' + indicator
+            return padTo(degrees.toFixed(0), 3, ' ') + "°" +
+                padTo(minutes.toFixed(0), 2, '0') + "'" +
+                padTo(seconds.toFixed(4), 7, '0') + '"' + indicator
         }
     }
 }

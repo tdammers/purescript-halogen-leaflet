@@ -11,4 +11,4 @@ import LeafletComponent as LC
 main :: Eff (HA.HalogenEffects (err :: EXCEPTION, leaflet :: LEAFLET)) Unit
 main = HA.runHalogenAff do
   body <- HA.awaitBody
-  runUI LC.ui unit body
+  runUI (LC.ui "slippy_map") unit body

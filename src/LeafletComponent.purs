@@ -21,6 +21,7 @@ import Data.Tuple (Tuple (..))
 type State =
   { leaflet :: Maybe Leaflet.Map
   , tileLayers :: Array Leaflet.Layer
+  , ref :: LeafletRef
   }
 
 data Query a
@@ -28,6 +29,7 @@ data Query a
   | Finalize a
   | AddTileLayer String a
   | GetView (Maybe (Tuple Leaflet.LatLng Leaflet.Zoom) -> a)
+  | GetRef (LeafletRef -> a)
   | HandleMove (H.SubscribeStatus -> a)
   | HandleZoom (H.SubscribeStatus -> a)
   | HandleClick MouseEvent (H.SubscribeStatus -> a)
@@ -42,9 +44,11 @@ data Message
   | DblClicked MouseEvent
   | MouseMoved MouseEvent
 
-ui =
+type LeafletRef = String
+
+ui ref =
   H.lifecycleComponent
-    { initialState: const initialLeaflet
+    { initialState: const (initialLeaflet ref)
     , render
     , eval
     , receiver: const Nothing
@@ -52,15 +56,16 @@ ui =
     , finalizer: Just (H.action Finalize)
     }
 
-initialLeaflet =
+initialLeaflet ref =
   { leaflet: Nothing
   , tileLayers: []
+  , ref: ref
   }
 
 render state =
   HH.div
-    [ HP.ref (H.RefLabel "leaflet")
-    , HP.prop (HC.PropName "id") "leaflet"
+    [ HP.ref (H.RefLabel state.ref)
+    , HP.prop (HC.PropName "id") state.ref
     ]
     [ ]
 
@@ -69,9 +74,10 @@ eval :: forall eff
      ~> H.ComponentDSL State Query Message
         (Aff (avar :: AVAR, leaflet :: LEAFLET, err :: EXCEPTION | eff))
 eval (Initialize next) = do
+  state <- H.get
   Tuple m l <- H.liftEff do
     m <- Leaflet.map
-      "leaflet"
+      state.ref
       (Leaflet.latlng 52.0 4.0)
       7
     l <- Leaflet.tileLayer("//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png")
@@ -146,3 +152,5 @@ eval (GetView reply) = do
         pure $ Tuple latlng zoom
       pure $ reply (Just view)
     )
+eval (GetRef reply) = do
+  H.gets _.ref >>= pure <<< reply

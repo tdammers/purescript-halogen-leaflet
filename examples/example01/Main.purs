@@ -6,9 +6,9 @@ import Control.Monad.Eff.Exception (EXCEPTION)
 import Leaflet (LEAFLET)
 import Halogen.Aff as HA
 import Halogen.VDom.Driver (runUI)
-import LeafletComponent as LC
+import MainComponent as MC
 
 main :: Eff (HA.HalogenEffects (err :: EXCEPTION, leaflet :: LEAFLET)) Unit
 main = HA.runHalogenAff do
   body <- HA.awaitBody
-  runUI (LC.ui "slippy_map") unit body
+  runUI MC.ui unit body

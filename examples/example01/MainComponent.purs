@@ -11,7 +11,7 @@ import LeafletComponent as LC
 import Control.Monad.Aff
 import Control.Monad.Aff.AVar (AVAR)
 import Control.Monad.Eff.Exception (EXCEPTION)
-import Leaflet (LEAFLET, LatLng, Zoom)
+import Leaflet (LEAFLET, LatLng, lat, lng, Zoom, TileLayerOption (..))
 import Data.Tuple (Tuple (..), fst)
 import Util (formatGeo)
 import Data.Array (elem, catMaybes)
@@ -70,22 +70,22 @@ ui =
         [ case state.view of
             Nothing ->
               Nothing
-            Just (Tuple { lat: lat, lng: lng } zoom) ->
+            Just (Tuple ll zoom) ->
               Just $ HH.div
                 [ HP.class_ $ H.ClassName "panel"
                 ]
-                [ HH.div [ HP.class_ $ H.ClassName "geo" ] [ HH.text $ formatGeo "N" "S" lat ]
-                , HH.div [ HP.class_ $ H.ClassName "geo" ] [ HH.text $ formatGeo "E" "W" lng ]
+                [ HH.div [ HP.class_ $ H.ClassName "geo" ] [ HH.text $ formatGeo "N" "S" (lat ll) ]
+                , HH.div [ HP.class_ $ H.ClassName "geo" ] [ HH.text $ formatGeo "E" "W" (lng ll) ]
                 , HH.div [ HP.class_ $ H.ClassName "zoom" ] [ HH.text $ "zoom: " <> show zoom ]
                 ]
         , case state.mousePos of
             Nothing -> Nothing
-            Just { lat: lat, lng: lng } ->
+            Just ll ->
               Just $ HH.div
                 [ HP.class_ $ H.ClassName "panel"
                 ]
-                [ HH.div [ HP.class_ $ H.ClassName "geo" ] [ HH.text $ formatGeo "N" "S" lat ]
-                , HH.div [ HP.class_ $ H.ClassName "geo" ] [ HH.text $ formatGeo "E" "W" lng ]
+                [ HH.div [ HP.class_ $ H.ClassName "geo" ] [ HH.text $ formatGeo "N" "S" (lat ll) ]
+                , HH.div [ HP.class_ $ H.ClassName "geo" ] [ HH.text $ formatGeo "E" "W" (lng ll) ]
                 ]
         ]
       ]
@@ -100,15 +100,23 @@ ui =
             (Aff (avar :: AVAR, leaflet :: LEAFLET, err :: EXCEPTION | eff))
   eval = case _ of
     Initialize next -> do
-      _ <- H.query LeafletSlot $ H.action (LC.AddTileLayer "//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png")
+      _ <- H.query LeafletSlot $ H.action
+            (LC.AddTileLayer
+              "//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              [ TileLayerAttribution "© OpenStreetMap"
+              ]
+            )
       pure next
     HandleLeaflet msg next -> do
-      when (msg `elem` [ LC.Moved, LC.Zoomed, LC.Initialized ]) $ do
-        v <- H.query LeafletSlot $ H.request LC.GetView
-        H.modify _ { view = join v }
       case msg of
+        LC.Moved -> updateView
+        LC.Zoomed -> updateView
+        LC.Initialized -> updateView
         LC.MouseMoved e -> do
           H.modify _ { mousePos = Just e.latlng }
-          pure next
-        _ -> pure next
-
+        _ -> pure unit
+      pure next
+  
+  updateView = do
+    v <- H.query LeafletSlot $ H.request LC.GetView
+    H.modify _ { view = join v }

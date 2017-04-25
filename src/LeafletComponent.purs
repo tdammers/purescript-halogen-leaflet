@@ -15,7 +15,7 @@ import Control.Monad.Eff.Exception (throw, EXCEPTION)
 import Control.Monad.Eff.Class (liftEff)
 import Math as Math
 import Leaflet as Leaflet
-import Leaflet (LEAFLET, LatLng, MouseEvent)
+import Leaflet (LEAFLET, LatLng, MouseEvent, TileLayerOption)
 import Data.Tuple (Tuple (..))
 
 type State =
@@ -27,7 +27,7 @@ type State =
 data Query a
   = Initialize a
   | Finalize a
-  | AddTileLayer String a
+  | AddTileLayer String (Array TileLayerOption) a
   | GetView (Maybe (Tuple Leaflet.LatLng Leaflet.Zoom) -> a)
   | GetRef (LeafletRef -> a)
   | HandleMove (H.SubscribeStatus -> a)
@@ -43,8 +43,6 @@ data Message
   | Clicked MouseEvent
   | DblClicked MouseEvent
   | MouseMoved MouseEvent
-
-derive instance eqMessage :: Eq Message
 
 type LeafletRef = String
 
@@ -105,13 +103,13 @@ eval (Initialize next) = do
   H.raise Initialized
   pure next
 
-eval (AddTileLayer url next) = do
+eval (AddTileLayer url options next) = do
   H.gets (_.leaflet) >>=
     case _ of
       Nothing -> pure unit
       Just m -> do
         l <- H.liftEff do
-          l <- Leaflet.tileLayer url []
+          l <- Leaflet.tileLayer url options
           Leaflet.addLayer l m
           pure l
         H.modify (\state ->

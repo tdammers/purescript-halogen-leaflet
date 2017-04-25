@@ -100,7 +100,7 @@ ui =
             (Aff (avar :: AVAR, leaflet :: LEAFLET, err :: EXCEPTION | eff))
   eval = case _ of
     Initialize next -> do
-      _ <- H.query LeafletSlot $ H.action
+      _ <- H.query LeafletSlot $ H.request
             (LC.AddTileLayer
               "//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               [ TileLayerAttribution "© OpenStreetMap"

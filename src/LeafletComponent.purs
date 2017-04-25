@@ -17,17 +17,22 @@ import Math as Math
 import Leaflet as Leaflet
 import Leaflet (LEAFLET, LatLng, MouseEvent, TileLayerOption)
 import Data.Tuple (Tuple (..))
+import Data.Map as Map
+import Data.Map (Map)
 
 type State =
   { leaflet :: Maybe Leaflet.Map
-  , tileLayers :: Array Leaflet.Layer
+  , tileLayers :: Map Int Leaflet.Layer
   , ref :: LeafletRef
+  , nextLayerID :: LayerID
   }
+
+type LayerID = Int
 
 data Query a
   = Initialize a
   | Finalize a
-  | AddTileLayer String (Array TileLayerOption) a
+  | AddTileLayer String (Array TileLayerOption) (Maybe LayerID -> a)
   | GetView (Maybe (Tuple Leaflet.LatLng Leaflet.Zoom) -> a)
   | GetRef (LeafletRef -> a)
   | HandleMove (H.SubscribeStatus -> a)
@@ -56,10 +61,12 @@ ui ref =
     , finalizer: Just (H.action Finalize)
     }
 
+initialLeaflet :: LeafletRef -> State
 initialLeaflet ref =
   { leaflet: Nothing
-  , tileLayers: []
+  , tileLayers: Map.empty
   , ref: ref
+  , nextLayerID: 0
   }
 
 render state =
@@ -80,8 +87,7 @@ eval (Initialize next) = do
 
   H.modify $ \state ->
     state
-      { tileLayers = []
-      , leaflet = Just m
+      { leaflet = Just m
       }
 
   H.subscribe $ H.eventSource_
@@ -103,21 +109,24 @@ eval (Initialize next) = do
   H.raise Initialized
   pure next
 
-eval (AddTileLayer url options next) = do
+eval (AddTileLayer url options reply) = do
   H.gets (_.leaflet) >>=
     case _ of
-      Nothing -> pure unit
+      Nothing ->
+        pure $ reply Nothing
       Just m -> do
         l <- H.liftEff do
           l <- Leaflet.tileLayer url options
           Leaflet.addLayer l m
           pure l
+        layerID <- H.gets _.nextLayerID
         H.modify (\state ->
             state
-              { tileLayers = Array.snoc state.tileLayers l
+              { tileLayers = Map.insert layerID l state.tileLayers
+              , nextLayerID = layerID + 1
               }
           )
-  pure next
+        pure $ reply (Just layerID)
 
 eval (HandleMove reply) = do
   H.raise Moved

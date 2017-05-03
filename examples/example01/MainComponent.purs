@@ -11,7 +11,8 @@ import LeafletComponent as LC
 import Control.Monad.Aff
 import Control.Monad.Aff.AVar (AVAR)
 import Control.Monad.Eff.Exception (EXCEPTION)
-import Leaflet (LEAFLET, LatLng, lat, lng, Zoom, TileLayerOption (..))
+import Leaflet (LEAFLET, LatLng, lat, lng, Zoom, MouseEvent (..))
+import Leaflet.TileLayer as TileLayer
 import Data.Tuple (Tuple (..), fst)
 import Util (formatGeo)
 import Data.Array (elem, catMaybes)
@@ -103,7 +104,7 @@ ui =
       _ <- H.query LeafletSlot $ H.request
             (LC.AddTileLayer
               "//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              [ TileLayerAttribution "© OpenStreetMap"
+              [ TileLayer.attribution "© OpenStreetMap"
               ]
             )
       pure next
@@ -112,7 +113,7 @@ ui =
         LC.Moved -> updateView
         LC.Zoomed -> updateView
         LC.Initialized -> updateView
-        LC.MouseMoved e -> do
+        LC.MouseMoved (MouseEvent e) -> do
           H.modify _ { mousePos = Just e.latlng }
         _ -> pure unit
       pure next

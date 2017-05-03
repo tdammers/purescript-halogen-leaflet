@@ -14,15 +14,16 @@ import Data.Either (either, Either (..))
 import Control.Monad.Eff.Exception (throw, EXCEPTION)
 import Control.Monad.Eff.Class (liftEff)
 import Math as Math
-import Leaflet as Leaflet
-import Leaflet (LEAFLET, LatLng, MouseEvent, TileLayerOption)
+import Leaflet as L
+import Leaflet (LEAFLET, LatLng, MouseEvent)
+import Leaflet.TileLayer as TileLayer
 import Data.Tuple (Tuple (..))
 import Data.Map as Map
 import Data.Map (Map)
 
 type State =
-  { leaflet :: Maybe Leaflet.Map
-  , tileLayers :: Map Int Leaflet.Layer
+  { leaflet :: Maybe L.Map
+  , tileLayers :: Map Int L.Layer
   , ref :: LeafletRef
   , nextLayerID :: LayerID
   }
@@ -32,8 +33,8 @@ type LayerID = Int
 data Query a
   = Initialize a
   | Finalize a
-  | AddTileLayer String (Array TileLayerOption) (Maybe LayerID -> a)
-  | GetView (Maybe (Tuple Leaflet.LatLng Leaflet.Zoom) -> a)
+  | AddTileLayer String (Array TileLayer.Option) (Maybe LayerID -> a)
+  | GetView (Maybe (Tuple L.LatLng L.Zoom) -> a)
   | GetRef (LeafletRef -> a)
   | HandleMove (H.SubscribeStatus -> a)
   | HandleZoom (H.SubscribeStatus -> a)
@@ -83,7 +84,7 @@ eval :: forall eff
 eval (Initialize next) = do
   ref <- H.gets _.ref
   m <- H.liftEff do
-    Leaflet.map ref (Leaflet.latlng 52.0 4.0) 7
+    L.map ref (L.latlng 52.0 4.0) 7
 
   H.modify $ \state ->
     state
@@ -91,19 +92,19 @@ eval (Initialize next) = do
       }
 
   H.subscribe $ H.eventSource_
-    (Leaflet.onZoom m)
+    (L.onZoom m)
     (H.request HandleZoom)
   H.subscribe $ H.eventSource
-    (Leaflet.onMove m)
+    (void <<< L.onMove m)
     (\latlng -> Just (H.request HandleMove))
   H.subscribe $ H.eventSource
-    (Leaflet.onClick m)
+    (void <<< L.on L.Click m)
     (\mouseEvent -> Just (H.request (HandleClick mouseEvent)))
   H.subscribe $ H.eventSource
-    (Leaflet.onDblClick m)
+    (void <<< L.on L.DblClick m)
     (\mouseEvent -> Just (H.request (HandleDblClick mouseEvent)))
   H.subscribe $ H.eventSource
-    (Leaflet.onMouseMove m)
+    (void <<< L.on L.MouseMove m)
     (\mouseEvent -> Just (H.request (HandleMouseMove mouseEvent)))
 
   H.raise Initialized
@@ -116,8 +117,8 @@ eval (AddTileLayer url options reply) = do
         pure $ reply Nothing
       Just m -> do
         l <- H.liftEff do
-          l <- Leaflet.tileLayer url options
-          Leaflet.addLayer l m
+          l <- L.tileLayer url options
+          L.addLayer l m
           pure l
         layerID <- H.gets _.nextLayerID
         H.modify (\state ->
@@ -150,8 +151,8 @@ eval (GetView reply) = do
     (pure $ reply Nothing)
     (\m -> do
       view <- H.liftEff do
-        latlng <- Leaflet.getCenter m
-        zoom <- Leaflet.getZoom m
+        latlng <- L.getCenter m
+        zoom <- L.getZoom m
         pure $ Tuple latlng zoom
       pure $ reply (Just view)
     )
